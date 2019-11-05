@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>doogie_drivers</name>
+  <version>0.0.0</version>
+  <description>Doogie Mouse Robot drivers package</description>
+
+  <maintainer email="mateusmenezes95@gmail.com">Mateus Menezes</maintainer>
+
+  <license>BSD</license>
+
+  <author email="mateusmenezes95@gmail.com">Mateus Menezes</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export></export>
+</package>
