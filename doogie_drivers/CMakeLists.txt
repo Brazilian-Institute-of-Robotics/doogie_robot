@@ -5,37 +5,34 @@ add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED)
 
+set(DOOGIE_MOTORS_DRIVER_LIB doogie_motors_driver)
+
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES doogie_drivers
-#  DEPENDS wiringPi
+  INCLUDE_DIRS include
+  LIBRARIES ${DOOGIE_MOTORS_DRIVER_LIB}
 )
-
+  
 include_directories(
-# include
-# ${catkin_INCLUDE_DIRS}
+  include
+  ${catkin_INCLUDE_DIRS}
+)
+    
+add_library(${DOOGIE_MOTORS_DRIVER_LIB}
+  src/${DOOGIE_MOTORS_DRIVER_LIB}.cpp
+)
+    
+find_library(wiringPi_LIB wiringPi)
+target_link_libraries(${DOOGIE_MOTORS_DRIVER_LIB}
+  ${wiringPi_LIB}
 )
 
-# find_library(wiringPi_LIB wiringPi)
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/doogie_drivers.cpp
-# )
+install(TARGETS ${DOOGIE_MOTORS_DRIVER_LIB}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
 
-# target_link_libraries(doogie_motors
-#   ${wiringPi_LIB}
-# )
-
-## Mark libraries for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-# install(TARGETS ${PROJECT_NAME}
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-# )
-
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.hpp"
-#   PATTERN "~" EXCLUDE
-# )
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.hpp"
+  PATTERN "*~" EXCLUDE
+)
