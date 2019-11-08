@@ -14,12 +14,12 @@ set(CATKIN_BUILD_DEPS
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_BUILD_DEPS})
 
 catkin_package(
- INCLUDE_DIRS include
+#  INCLUDE_DIRS include
  CATKIN_DEPENDS ${CATKIN_BUILD_DEPS}
 )
 
 include_directories(
-  include
+  # include
   ${catkin_INCLUDE_DIRS}
 )
 
