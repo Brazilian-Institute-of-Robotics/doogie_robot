@@ -6,10 +6,11 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED)
 
 set(DOOGIE_MOTORS_DRIVER_LIB doogie_motors_driver)
+set(QUADRATURE_ENCODER_DRIVER_LIB quadrature_encoder_driver)
 
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES ${DOOGIE_MOTORS_DRIVER_LIB}
+  LIBRARIES ${DOOGIE_MOTORS_DRIVER_LIB} ${QUADRATURE_ENCODER_DRIVER_LIB}
 )
   
 include_directories(
@@ -20,13 +21,21 @@ include_directories(
 add_library(${DOOGIE_MOTORS_DRIVER_LIB}
   src/${DOOGIE_MOTORS_DRIVER_LIB}.cpp
 )
+
+add_library(${QUADRATURE_ENCODER_DRIVER_LIB}
+  src/${QUADRATURE_ENCODER_DRIVER_LIB}.cpp
+)
     
 find_library(wiringPi_LIB wiringPi)
 target_link_libraries(${DOOGIE_MOTORS_DRIVER_LIB}
   ${wiringPi_LIB}
 )
 
-install(TARGETS ${DOOGIE_MOTORS_DRIVER_LIB}
+target_link_libraries(${QUADRATURE_ENCODER_DRIVER_LIB}
+  ${wiringPi_LIB}
+)
+
+install(TARGETS ${DOOGIE_MOTORS_DRIVER_LIB} ${QUADRATURE_ENCODER_DRIVER_LIB}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 )

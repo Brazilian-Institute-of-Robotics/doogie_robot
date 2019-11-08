@@ -1,5 +1,9 @@
-#ifndef _INCLUDE_DOOGIE_DRIVERS_DOOGIE_MOTORS_DRIVER_HPP_
-#define _INCLUDE_DOOGIE_DRIVERS_DOOGIE_MOTORS_DRIVER_HPP_
+/*
+ * Copyright (c) 2019, Brazilian Institute of Robotics
+ */
+
+#ifndef DOOGIE_DRIVERS_DOOGIE_MOTORS_DRIVER_HPP_
+#define DOOGIE_DRIVERS_DOOGIE_MOTORS_DRIVER_HPP_
 
 // Pins referenced by BCM_GPIO
 #define MOTOR_LEFT_PWM 18
@@ -8,7 +12,7 @@
 
 // Pins referenced by BCM_GPIO
 #define MOTOR_RIGHT_PWM 19
-#define MOTOR_RIGHT_EN1 6 
+#define MOTOR_RIGHT_EN1 6
 #define MOTOR_RIGHT_EN2 12
 
 // Pin referenced by BCM_GPIO
@@ -21,38 +25,38 @@
 namespace doogie_drivers {
 
 enum VelocityType {
-	LINEAR,
-	ANGULAR
+  LINEAR,
+  ANGULAR
 };
 
 enum MotorSide {
-	LEFT,
-	RIGHT
+  LEFT,
+  RIGHT
 };
 
 class DoogieMotorsDriver {
  public:
-	DoogieMotorsDriver(float wheel_diameter=0.032, float gear_ratio=29.86);
-	void init();
-	void setMotorVelocity(float velocity, MotorSide motor_side, VelocityType velocity_type=LINEAR);
-	void setMotorsVelocity(float velocity, VelocityType velocity_type=LINEAR);
-	void brakeMotor(MotorSide motor_side);
-	void brakeMotors();
-	float getLeftMotorVelocity();
-	float getRightMotorVelocity();
-	~DoogieMotorsDriver();
- 
- private:
-	enum TurningDirection {
-		CLOCKWISE,
-		COUNTER_CLOCKWISE
-	};
+  explicit DoogieMotorsDriver(float wheel_diameter = 0.032, float gear_ratio = 29.86);
+  void init();
+  void setMotorVelocity(float velocity, MotorSide motor_side, VelocityType velocity_type = LINEAR);
+  void setMotorsVelocity(float velocity, VelocityType velocity_type = LINEAR);
+  void brakeMotor(MotorSide motor_side);
+  void brakeMotors();
+  float getLeftMotorVelocity();
+  float getRightMotorVelocity();
+  ~DoogieMotorsDriver();
 
-	void setMotorTurningDirection(MotorSide motor_side, TurningDirection turning_direction);
-	float wheel_diameter_;
-	float gear_ratio_;
+ private:
+  enum TurningDirection {
+    CLOCKWISE,
+    COUNTER_CLOCKWISE
+  };
+
+  void setMotorTurningDirection(MotorSide motor_side, TurningDirection turning_direction);
+  float wheel_diameter_;
+  float gear_ratio_;
 };
 
-}
+}  // namespace doogie_drivers
 
-#endif // _INCLUDE_DOOGIE_DRIVERS_DOOGIE_MOTORS_DRIVER_HPP_
+#endif  // DOOGIE_DRIVERS_DOOGIE_MOTORS_DRIVER_HPP_
