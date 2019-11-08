@@ -16,9 +16,9 @@
   <build_depend>doogie_drivers</build_depend>
   
   <exec_depend>roscpp</exec_depend>
+  <exec_depend>doogie_control</exec_depend>
   <exec_depend>controller_manager</exec_depend>
   <exec_depend>hardware_interface</exec_depend>
-  <exec_depend>diff_drive_controller</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>doogie_drivers</exec_depend>
 
