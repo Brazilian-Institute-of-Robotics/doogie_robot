@@ -14,12 +14,12 @@ set(CATKIN_BUILD_DEPS
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_BUILD_DEPS})
 
 catkin_package(
-#  INCLUDE_DIRS include
+ INCLUDE_DIRS include
  CATKIN_DEPENDS ${CATKIN_BUILD_DEPS}
 )
 
 include_directories(
-  # include
+  include
   ${catkin_INCLUDE_DIRS}
 )
 
@@ -30,11 +30,12 @@ add_library(doogie_hardware
 target_link_libraries(doogie_hardware
   ${catkin_LIBRARIES}
 )
-add_executable(doogie_control_node 
-  src/doogie_control_node.cpp
+
+add_executable(doogie_base 
+  src/doogie_base.cpp
 )
 
-target_link_libraries(doogie_control_node
+target_link_libraries(doogie_base
   ${catkin_LIBRARIES}
   doogie_hardware
 )
