@@ -127,7 +127,6 @@
 #define DOOGIE_DRIVERS_QUADRATURE_ENCODER_DRIVER_H_
 
 #include <cstdint>
-#include "wiringPi.h"
 
 #define PREV_MASK 0x1  // Mask for the previous state in determining direction f rotation.
 #define CURR_MASK 0x2  // Mask for the current state in determining direction of rotation.
@@ -137,46 +136,16 @@ namespace doogie_drivers {
 
 class QuadratureEncoder {
  public:
-  static uint8_t channel_a_pin_;
-  static uint8_t channel_b_pin_;
-  static uint8_t index_;
-
-  static int pulses_per_rev_;
-  static uint8_t prev_state_;
-  static uint8_t curr_state_;
-
-  static volatile int pulses_;
-  static volatile int revolutions_;
-
   typedef enum Encoding {
     X2_ENCODING,
     X4_ENCODING
   } Encoding;
 
-  static Encoding encoding_;
   /**
-   * Constructor.
-   *
-   * Reads the current values on channel A and channel B to determine the
-   * initial state.
-   *
-   * Attaches the encode function to the rise/fall interrupt edges of
-   * channels A and B to perform X4 encoding.
-   *
-   * Attaches the index function to the rise interrupt edge of channel index
-   * (if it is used) to count revolutions.
-   *
-   * @param channel_a_pin BCM_GPIO pin for channel A input.
-   * @param channel_a_pin BCM_GPIO pin for channel B input.
-   * @param index BCM_GPIO pin for optional index channel input, (pass -1 if not needed).
-   * @param pulses_per_rev Number of pulses in one revolution.
-   * @param encoding The encoding to use. Uses X2 encoding by default. X2
-   *                 encoding uses interrupts on the rising and falling edges
-   *                 of only channel A where as X4 uses them on both
-   *                 channels.
+   * @brief Construct a new QuadratureEncoder object
+   * 
    */
-  QuadratureEncoder(int channel_a_pin, int channel_b_pin, int index,
-                    int pulses_per_rev, Encoding encoding = X2_ENCODING);
+  QuadratureEncoder();
 
   /**
    * @brief Reset the encoder.
@@ -226,6 +195,19 @@ class QuadratureEncoder {
    * count by one.
    */
   static void index(void);
+
+  static int channel_a_pin_;
+  static int channel_b_pin_;
+  static int index_pin_;
+
+  static int pulses_per_rev_;
+  static uint8_t prev_state_;
+  static uint8_t curr_state_;
+
+  static volatile int pulses_;
+  static volatile int revolutions_;
+
+  static Encoding encoding_;
 };
 
 }  // namespace doogie_drivers

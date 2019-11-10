@@ -22,157 +22,70 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
- *
- * @section DESCRIPTION
- *
- * Quadrature Encoder Interface.
- *
- * A quadrature encoder consists of two code tracks on a disc which are 90
- * degrees out of phase. It can be used to determine how far a wheel has
- * rotated, relative to a known starting position.
- *
- * Only one code track changes at a time leading to a more robust system than
- * a single track, because any jitter around any edge won't cause a state
- * change as the other track will remain constant.
- *
- * Encoders can be a homebrew affair, consisting of infrared emitters/receivers
- * and paper code tracks consisting of alternating black and white sections;
- * alternatively, complete disk and PCB emitter/receiver encoder systems can
- * be bought, but the interface, regardless of implementation is the same.
- *
- *               +-----+     +-----+     +-----+
- * Channel A     |  ^  |     |     |     |     |
- *            ---+  ^  +-----+     +-----+     +-----
- *               ^  ^
- *               ^  +-----+     +-----+     +-----+
- * Channel B     ^  |     |     |     |     |     |
- *            ------+     +-----+     +-----+     +-----
- *               ^  ^
- *               ^  ^
- *               90deg
- *
- * The interface uses X2 encoding by default which calculates the pulse count
- * based on reading the current state after each rising and falling edge of
- * channel A.
- *
- *               +-----+     +-----+     +-----+
- * Channel A     |     |     |     |     |     |
- *            ---+     +-----+     +-----+     +-----
- *               ^     ^     ^     ^     ^
- *               ^  +-----+  ^  +-----+  ^  +-----+
- * Channel B     ^  |  ^  |  ^  |  ^  |  ^  |     |
- *            ------+  ^  +-----+  ^  +-----+     +--
- *               ^     ^     ^     ^     ^
- *               ^     ^     ^     ^     ^
- * Pulse count 0 1     2     3     4     5  ...
- *
- * This interface can also use X4 encoding which calculates the pulse count
- * based on reading the current state after each rising and falling edge of
- * either channel.
- *
- *               +-----+     +-----+     +-----+
- * Channel A     |     |     |     |     |     |
- *            ---+     +-----+     +-----+     +-----
- *               ^     ^     ^     ^     ^
- *               ^  +-----+  ^  +-----+  ^  +-----+
- * Channel B     ^  |  ^  |  ^  |  ^  |  ^  |     |
- *            ------+  ^  +-----+  ^  +-----+     +--
- *               ^  ^  ^  ^  ^  ^  ^  ^  ^  ^
- *               ^  ^  ^  ^  ^  ^  ^  ^  ^  ^
- * Pulse count 0 1  2  3  4  5  6  7  8  9  ...
- *
- * It defaults
- *
- * An optional index channel can be used which determines when a full
- * revolution has occured.
- *
- * If a 4 pules per revolution encoder was used, with X4 encoding,
- * the following would be observed.
- *
- *               +-----+     +-----+     +-----+
- * Channel A     |     |     |     |     |     |
- *            ---+     +-----+     +-----+     +-----
- *               ^     ^     ^     ^     ^
- *               ^  +-----+  ^  +-----+  ^  +-----+
- * Channel B     ^  |  ^  |  ^  |  ^  |  ^  |     |
- *            ------+  ^  +-----+  ^  +-----+     +--
- *               ^  ^  ^  ^  ^  ^  ^  ^  ^  ^
- *               ^  ^  ^  ^  ^  ^  ^  ^  ^  ^
- *               ^  ^  ^  +--+  ^  ^  +--+  ^
- *               ^  ^  ^  |  |  ^  ^  |  |  ^
- * Index      ------------+  +--------+  +-----------
- *               ^  ^  ^  ^  ^  ^  ^  ^  ^  ^
- * Pulse count 0 1  2  3  4  5  6  7  8  9  ...
- * Rev.  count 0          1           2
- *
- * Rotational position in degrees can be calculated by:
- *
- * (pulse count / X * N) * 360
- *
- * Where X is the encoding type [e.g. X4 encoding => X=4], and N is the number
- * of pulses per revolution.
- *
- * Linear position can be calculated by:
- *
- * (pulse count / X * N) * (1 / PPI)
- *
- * Where X is encoding type [e.g. X4 encoding => X=44], N is the number of
- * pulses per revolution, and PPI is pulses per inch, or the equivalent for
- * any other unit of displacement. PPI can be calculated by taking the
- * circumference of the wheel or encoder disk and dividing it by the number
- * of pulses per revolution.
  */
 
-
 #include "doogie_drivers/quadrature_encoder_driver.hpp"
+#include "wiringPi.h"
 
 namespace doogie_drivers {
 
-QuadratureEncoder::QuadratureEncoder(int channel_a_pin, int channel_b_pin, int index,
-                                     int pulses_per_rev, Encoding encoding) {
+int QuadratureEncoder::channel_a_pin_ = 14;
+int QuadratureEncoder::channel_b_pin_ = 15;
+int QuadratureEncoder::index_pin_ = -1;
+
+volatile int QuadratureEncoder::pulses_ = 0;
+volatile int QuadratureEncoder::revolutions_ = 0;
+
+uint8_t QuadratureEncoder::prev_state_ = 0;
+uint8_t QuadratureEncoder::curr_state_ = 0;
+
+int QuadratureEncoder::pulses_per_rev_ = 360;
+QuadratureEncoder::Encoding QuadratureEncoder::encoding_ = QuadratureEncoder::Encoding::X4_ENCODING;
+
+QuadratureEncoder::QuadratureEncoder() {
   if (wiringPiSetupGpio() == -1) throw("Error on wiringPi setup");
 
-  pinMode(QuadratureEncoder::channel_a_pin_, INPUT);
-  pinMode(QuadratureEncoder::channel_b_pin_, INPUT);
+  pinMode(channel_a_pin_, INPUT);
+  pinMode(channel_b_pin_, INPUT);
 
   // Workout what the current state is.
-  uint8_t channel_a_state = digitalRead(QuadratureEncoder::channel_a_pin_);
-  uint8_t channel_b_state = digitalRead(QuadratureEncoder::channel_b_pin_);
+  uint8_t channel_a_state = digitalRead(channel_a_pin_);
+  uint8_t channel_b_state = digitalRead(channel_b_pin_);
 
   // 2-bit state.
-  QuadratureEncoder::curr_state_ = (channel_a_state << 1) | (channel_b_state);
-  QuadratureEncoder::prev_state_ = QuadratureEncoder::curr_state_;
+  curr_state_ = (channel_a_state << 1) | (channel_b_state);
+  prev_state_ = curr_state_;
 
   // X2 encoding uses interrupts on only channel A.
   // X4 encoding uses interrupts on channel A and on channel B.
-  wiringPiISR(QuadratureEncoder::channel_a_pin_, INT_EDGE_BOTH, &QuadratureEncoder::encode);
+  wiringPiISR(channel_a_pin_, INT_EDGE_BOTH, &QuadratureEncoder::encode);
 
   // If we're using X4 encoding, then attach interrupts to channel B too.
-  if (encoding == X4_ENCODING) {
-    wiringPiISR(QuadratureEncoder::channel_b_pin_, INT_EDGE_BOTH, &QuadratureEncoder::encode);
+  if (encoding_ == X4_ENCODING) {
+    wiringPiISR(channel_b_pin_, INT_EDGE_BOTH, &QuadratureEncoder::encode);
   }
 
   // Index is optional.
-  if (index !=  -1) {
-    wiringPiISR(QuadratureEncoder::index_, INT_EDGE_RISING, &QuadratureEncoder::index);
+  if (index_pin_ !=  -1) {
+    wiringPiISR(index_pin_, INT_EDGE_RISING, &QuadratureEncoder::index);
   }
 }
 
 void QuadratureEncoder::reset(void) {
-  QuadratureEncoder::QuadratureEncoder::pulses_ = 0;
-  QuadratureEncoder::revolutions_ = 0;
+  pulses_ = 0;
+  revolutions_ = 0;
 }
 
 int QuadratureEncoder::getCurrentState(void) {
-  return QuadratureEncoder::curr_state_;
+  return curr_state_;
 }
 
 int QuadratureEncoder::getPulses(void) {
-  return QuadratureEncoder::QuadratureEncoder::pulses_;
+  return pulses_;
 }
 
 int QuadratureEncoder::getRevolutions(void) {
-  return QuadratureEncoder::revolutions_;
+  return revolutions_;
 }
 
 // +-------------+
@@ -221,41 +134,38 @@ int QuadratureEncoder::getRevolutions(void) {
 // the state and carry on, with the error correcting itself shortly after.
 void QuadratureEncoder::encode() {
   int change = 0;
-  uint8_t channel_a_state = digitalRead(QuadratureEncoder::channel_a_pin_);
-  uint8_t channel_b_state = digitalRead(QuadratureEncoder::channel_b_pin_);
+  uint8_t channel_a_state = digitalRead(channel_a_pin_);
+  uint8_t channel_b_state = digitalRead(channel_b_pin_);
 
   // 2-bit state.
-  QuadratureEncoder::curr_state_ = (channel_a_state << 1) | (channel_b_state);
-  if (QuadratureEncoder::encoding_ == X2_ENCODING) {
+  curr_state_ = (channel_a_state << 1) | (channel_b_state);
+  if (encoding_ == X2_ENCODING) {
     // 11->00->11->00 is counter clockwise rotation or "forward".
-    if ((QuadratureEncoder::prev_state_ == 0x3 && QuadratureEncoder::curr_state_ == 0x0) ||
-        (QuadratureEncoder::prev_state_ == 0x0 && QuadratureEncoder::curr_state_ == 0x3)) {
-      QuadratureEncoder::pulses_++;
+    if ((prev_state_ == 0x3 && curr_state_ == 0x0) || (prev_state_ == 0x0 && curr_state_ == 0x3)) {
+      pulses_++;
     } else {
       // 10->01->10->01 is clockwise rotation or "backward".
-      if ((QuadratureEncoder::prev_state_ == 0x2 && QuadratureEncoder::curr_state_ == 0x1) ||
-          (QuadratureEncoder::prev_state_ == 0x1 && QuadratureEncoder::curr_state_ == 0x2)) {
-        QuadratureEncoder::pulses_--;
+      if ((prev_state_ == 0x2 && curr_state_ == 0x1) || (prev_state_ == 0x1 && curr_state_ == 0x2)) {
+        pulses_--;
       }
     }
   } else {
-    if (QuadratureEncoder::encoding_ == X4_ENCODING) {
+    if (encoding_ == X4_ENCODING) {
       // Entered a new valid state.
-      if (((QuadratureEncoder::curr_state_ ^ QuadratureEncoder::prev_state_) != INVALID) &&
-          (QuadratureEncoder::curr_state_ != QuadratureEncoder::prev_state_)) {
+      if (((curr_state_ ^ prev_state_) != INVALID) && (curr_state_ != prev_state_)) {
         // 2 bit state. Right hand bit of prev XOR left hand bit of current
         // gives 0 if clockwise rotation and 1 if counter clockwise rotation.
-        change = (QuadratureEncoder::prev_state_ & PREV_MASK) ^ ((QuadratureEncoder::curr_state_ & CURR_MASK) >> 1);
+        change = (prev_state_ & PREV_MASK) ^ ((curr_state_ & CURR_MASK) >> 1);
         if (change == 0) change = -1;
-        QuadratureEncoder::pulses_ -= change;
+        pulses_ -= change;
       }
     }
   }
-  QuadratureEncoder::prev_state_ = QuadratureEncoder::curr_state_;
+  prev_state_ = curr_state_;
 }
 
 void QuadratureEncoder::index(void) {
-  QuadratureEncoder::revolutions_++;
+  revolutions_++;
 }
 
 }  // namespace doogie_drivers

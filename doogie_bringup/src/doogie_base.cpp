@@ -19,18 +19,11 @@ int main(int argc, char **argv) {
   doogie_bringup::DoogieHardware doogie_hardware;
   controller_manager::ControllerManager cm(&doogie_hardware, nh);
 
-  QuadratureEncoder::channel_a_pin_ = 14;
-  QuadratureEncoder::channel_b_pin_ = 15;
-  QuadratureEncoder::index_ = -1;
-
-  QuadratureEncoder::QuadratureEncoder::pulses_ = 0;
-  QuadratureEncoder::revolutions_ = 0;
-  QuadratureEncoder::QuadratureEncoder::pulses_per_rev_ = 360;
-  QuadratureEncoder::encoding_ = doogie_drivers::QuadratureEncoder::X4_ENCODING;
-
-  doogie_drivers::QuadratureEncoder quadrature_encoder(14, 15, -1, 360, doogie_drivers::QuadratureEncoder::X4_ENCODING);
+  doogie_drivers::QuadratureEncoder quadrature_encoder;
 
   ros::Duration period(0.1);
+  ros::Time last_time;
+  last_time = ros::Time::now();
   while (ros::ok()) {
     doogie_hardware.read(period);
     cm.update(ros::Time::now(), period);
@@ -38,6 +31,8 @@ int main(int argc, char **argv) {
     ROS_INFO("Control Loop");
     ROS_INFO("Encoder value = %d", quadrature_encoder.getPulses());
     period.sleep();
+    ROS_INFO("Time = %f", (ros::Time::now() - last_time).toSec());
+    last_time = ros::Time::now();
   }
 
   return 0;
