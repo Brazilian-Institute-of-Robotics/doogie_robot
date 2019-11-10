@@ -188,24 +188,14 @@ class QuadratureEncoder {
    */
   static void encode(void);
 
-  /**
-   * @brief update revolution.
-   * 
-   * Called on every rising edge of channel index to update revolution
-   * count by one.
-   */
-  static void index(void);
-
   static int channel_a_pin_;
   static int channel_b_pin_;
-  static int index_pin_;
 
   static int pulses_per_rev_;
   static uint8_t prev_state_;
   static uint8_t curr_state_;
 
   static volatile int pulses_;
-  static volatile int revolutions_;
 
   static Encoding encoding_;
 };

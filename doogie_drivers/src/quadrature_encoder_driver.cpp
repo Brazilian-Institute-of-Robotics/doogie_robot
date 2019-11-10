@@ -31,10 +31,8 @@ namespace doogie_drivers {
 
 int QuadratureEncoder::channel_a_pin_ = 14;
 int QuadratureEncoder::channel_b_pin_ = 15;
-int QuadratureEncoder::index_pin_ = -1;
 
 volatile int QuadratureEncoder::pulses_ = 0;
-volatile int QuadratureEncoder::revolutions_ = 0;
 
 uint8_t QuadratureEncoder::prev_state_ = 0;
 uint8_t QuadratureEncoder::curr_state_ = 0;
@@ -64,16 +62,10 @@ QuadratureEncoder::QuadratureEncoder() {
   if (encoding_ == X4_ENCODING) {
     wiringPiISR(channel_b_pin_, INT_EDGE_BOTH, &QuadratureEncoder::encode);
   }
-
-  // Index is optional.
-  if (index_pin_ !=  -1) {
-    wiringPiISR(index_pin_, INT_EDGE_RISING, &QuadratureEncoder::index);
-  }
 }
 
 void QuadratureEncoder::reset(void) {
   pulses_ = 0;
-  revolutions_ = 0;
 }
 
 int QuadratureEncoder::getCurrentState(void) {
@@ -82,10 +74,6 @@ int QuadratureEncoder::getCurrentState(void) {
 
 int QuadratureEncoder::getPulses(void) {
   return pulses_;
-}
-
-int QuadratureEncoder::getRevolutions(void) {
-  return revolutions_;
 }
 
 // +-------------+
@@ -162,10 +150,6 @@ void QuadratureEncoder::encode() {
     }
   }
   prev_state_ = curr_state_;
-}
-
-void QuadratureEncoder::index(void) {
-  revolutions_++;
 }
 
 }  // namespace doogie_drivers
