@@ -7,6 +7,7 @@
 #include "hardware_interface/joint_command_interface.h"
 #include "hardware_interface/robot_hw.h"
 #include "doogie_drivers/doogie_motors_driver.hpp"
+#include "doogie_drivers/quadrature_encoder_driver.hpp"
 #include "ros/ros.h"
 
 #ifndef DOOGIE_BRINGUP_DOOGIE_HARDWARE_HPP_
@@ -18,12 +19,13 @@ class DoogieHardware : public hardware_interface::RobotHW {
  public:
   DoogieHardware();
   void write();
-  void read(const ros::Duration &period);
+  void read(const double &dt);
 
  private:
   hardware_interface::JointStateInterface joint_state_interface_;
   hardware_interface::VelocityJointInterface velocity_joint_interface_;
   doogie_drivers::DoogieMotorsDriver doogie_motors_;
+  doogie_drivers::QuadratureEncoder doogie_encoders_;
   std::string logger_name_;
   double joint_velocity_cmd_[2];
   double joint_position_[2];

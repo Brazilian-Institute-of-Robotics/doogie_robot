@@ -8,6 +8,7 @@
 #include "doogie_drivers/quadrature_encoder_driver.hpp"
 
 using doogie_drivers::QuadratureEncoder;
+using doogie_drivers::EncoderSide;
 
 int main(int argc, char **argv) {
   ros::init(argc, argv, "doogie_control");
@@ -19,20 +20,20 @@ int main(int argc, char **argv) {
   doogie_bringup::DoogieHardware doogie_hardware;
   controller_manager::ControllerManager cm(&doogie_hardware, nh);
 
-  doogie_drivers::QuadratureEncoder quadrature_encoder;
-
   ros::Duration period(0.1);
-  ros::Time last_time;
-  last_time = ros::Time::now();
+  ros::Time last_time = ros::Time::now();
+  double dt = last_time.toSec();
+
   while (ros::ok()) {
-    doogie_hardware.read(period);
-    cm.update(ros::Time::now(), period);
-    doogie_hardware.write();
-    ROS_INFO("Control Loop");
-    ROS_INFO("Encoder value = %d", quadrature_encoder.getPulses());
-    period.sleep();
-    ROS_INFO("Time = %f", (ros::Time::now() - last_time).toSec());
+    dt = ros::Time::now().toSec() - last_time.toSec();
     last_time = ros::Time::now();
+    ROS_INFO("Time = %f", dt);
+
+    doogie_hardware.read(dt);
+    cm.update(ros::Time::now(), ros::Duration(dt));
+    doogie_hardware.write();
+
+    period.sleep();
   }
 
   return 0;
