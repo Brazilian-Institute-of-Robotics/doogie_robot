@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+ 
+  <arg name="robot_name" default="doogie"/>
+ 
+  <group ns="$(arg robot_name)">
+   
+    <node name="doogie_node" pkg="doogie_bringup" type="doogie_base" output="screen"/>
+    
+    <include file="$(find doogie_control)/launch/robot_control.launch">
+      <arg name="ns" value="$(arg robot_name)"/>
+    </include>
+
+  </group>
+
+</launch>
