@@ -86,7 +86,7 @@
  * An optional index channel can be used which determines when a full
  * revolution has occured.
  *
- * If a 4 pules per revolution encoder was used, with X4 encoding,
+ * If a 4 pulses per revolution encoder was used, with X4 encoding,
  * the following would be observed.
  *
  *               +-----+     +-----+     +-----+
@@ -110,13 +110,16 @@
  * (pulse count / X * N) * 360
  *
  * Where X is the encoding type [e.g. X4 encoding => X=4], and N is the number
- * of pulses per revolution.
+ * of pulses per revolution (PPR). Note that PPR is not the same Counter Per
+ * Revolution (CPR). These stands are related by the follow equation:
+ * 
+ * PPR = CPR / 4
  *
  * Linear position can be calculated by:
  *
  * (pulse count / X * N) * (1 / PPI)
  *
- * Where X is encoding type [e.g. X4 encoding => X=44], N is the number of
+ * Where X is encoding type [e.g. X4 encoding => X=4], N is the number of
  * pulses per revolution, and PPI is pulses per inch, or the equivalent for
  * any other unit of displacement. PPI can be calculated by taking the
  * circumference of the wheel or encoder disk and dividing it by the number
@@ -134,6 +137,18 @@
 
 namespace doogie_drivers {
 
+enum EncoderPinsIndex {
+  LEFT_ENC_CHA,
+  LEFT_ENC_CHB,
+  RIGHT_ENC_CHA,
+  RIGHT_ENC_CHB
+};
+
+enum EncoderSide {
+  LEFT_ENC,
+  RIGHT_ENC
+};
+
 class QuadratureEncoder {
  public:
   typedef enum Encoding {
@@ -145,14 +160,20 @@ class QuadratureEncoder {
    * @brief Construct a new QuadratureEncoder object
    * 
    */
-  QuadratureEncoder();
+  QuadratureEncoder(unsigned int pulses_per_rev, double wheel_radius, unsigned int gear_ratio = 1);
+
+  /**
+   * @brief Setup pins and interrupts
+   * 
+   */
+  void init();
 
   /**
    * @brief Reset the encoder.
    *
    * Sets the pulses and revolutions count to zero.
    */
-  void reset(void);
+  void reset(EncoderSide enc_side);
 
   /**
    * @brief Read the state of the encoder.
@@ -161,21 +182,46 @@ class QuadratureEncoder {
    *         bit 1 = The reading from channel B
    *         bit 2 = The reading from channel A
    */
-  int getCurrentState(void);
+  int getCurrentState(EncoderSide enc_side);
 
   /**
    * @brief Read the number of pulses recorded by the encoder.
    *
    * @return Number of pulses which have occured.
    */
-  int getPulses(void);
+  int getPulses(EncoderSide enc_side);
 
   /**
-   * @brief Read the number of revolutions recorded by the encoder on the index channel.
+   * @brief Get the Angular Position of the wheel
+   * 
+   * Rotational position in rad can be calculated by:
    *
-   * @return Number of revolutions which have occured on the index channel.
+   * (pulse count / X * N) * 2*pi
+   *
+   * Where X is the encoding type [e.g. X4 encoding => X=4], and N is the number
+   * of pulses per revolution.
+   * 
+   * @param enc_side Robot side where encoder is assembled 
+   * @return double Angular poisiton in radians
    */
-  int getRevolutions(void);
+  double getAngularPosition(EncoderSide enc_side);
+
+  /**
+   * @brief Get the Linear Position of the wheel
+   * Linear position can be calculated by:
+   *
+   * (pulse count / X * N) * (1 / PPM)
+   *
+   * Where X is encoding type [e.g. X4 encoding => X=4], N is the number of
+   * pulses per revolution, and PPM is pulses per meters, or the equivalent for
+   * any other unit of displacement. PPM can be calculated by taking the
+   * circumference of the wheel or encoder disk and dividing it by the number
+   * of pulses per revolution.
+   * 
+   * @param enc_side Robot side where encoder is assembled
+   * @return double Linear poisiton in radians
+   */
+  double getLinearPosition(EncoderSide enc_side);
 
  private:
   /**
@@ -186,16 +232,16 @@ class QuadratureEncoder {
    * Reads the state of the channels and determines whether a pulse forward
    * or backward has occured, updating the count appropriately.
    */
-  static void encode(void);
+  static void encodeLeft(void);
+  static void encodeRight(void);
 
-  static int channel_a_pin_;
-  static int channel_b_pin_;
+  unsigned int pulses_per_rev_;
+  double pulses_per_meters_;
 
-  static int pulses_per_rev_;
-  static uint8_t prev_state_;
-  static uint8_t curr_state_;
-
-  static volatile int pulses_;
+  static int channel_pins_[4];
+  static uint8_t prev_state_[2];
+  static uint8_t curr_state_[2];
+  static volatile int pulses_[2];
 
   static Encoding encoding_;
 };
