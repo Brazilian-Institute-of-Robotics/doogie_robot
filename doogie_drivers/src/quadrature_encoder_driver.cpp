@@ -26,7 +26,6 @@
 
 #include "doogie_drivers/quadrature_encoder_driver.hpp"
 #include "wiringPi.h"
-#include <cstddef>
 #include <math.h>
 
 namespace doogie_drivers {
@@ -38,9 +37,15 @@ uint8_t QuadratureEncoder::curr_state_[2] = {0, 0};
 
 QuadratureEncoder::Encoding QuadratureEncoder::encoding_ = QuadratureEncoder::Encoding::X2_ENCODING;
 
-QuadratureEncoder::QuadratureEncoder(unsigned int pulses_per_rev, double wheel_radius, unsigned int gear_ratio) {
+QuadratureEncoder::QuadratureEncoder(unsigned int pulses_per_rev, double wheel_radius,
+                                     unsigned int gear_ratio, size_t velocity_rolling_window_size)
+  : velocity_rolling_window_size_(velocity_rolling_window_size)
+  , vel_left_acc_(RollingWindow::window_size = velocity_rolling_window_size_)
+  , vel_right_acc_(RollingWindow::window_size = velocity_rolling_window_size_) {
   this->pulses_per_rev_ = pulses_per_rev * gear_ratio;
   this->pulses_per_meters_ = (2.0f * M_PI * wheel_radius) / this->pulses_per_rev_;
+
+  for  (size_t i = 0; i < 2; i++) old_pos_[i] = 0;
 }
 
 void QuadratureEncoder::init() {
@@ -212,6 +217,34 @@ void QuadratureEncoder::encodeRight() {
     }
   }
   prev_state_[RIGHT_ENC] = curr_state_[RIGHT_ENC];
+}
+
+void QuadratureEncoder::updateVelocity(double dt) {
+  // We cannot estimate the speed with very small time intervals:
+  if (dt < 0.0001)
+    return;  // Interval too small to integrate with
+  
+  double cur_pos[2];
+  double est_vel[2];
+
+  cur_pos[LEFT_ENC] = this->getAngularPosition(LEFT_ENC);
+  cur_pos[RIGHT_ENC] = this->getAngularPosition(RIGHT_ENC);
+
+  est_vel[LEFT_ENC] = (cur_pos[LEFT_ENC] - old_pos_[LEFT_ENC]) / dt;
+  est_vel[RIGHT_ENC] = (cur_pos[RIGHT_ENC] - old_pos_[RIGHT_ENC]) / dt;
+
+  vel_left_acc_(est_vel[LEFT_ENC]);
+  vel_right_acc_(est_vel[RIGHT_ENC]);
+
+  vel_[LEFT_ENC] = bacc::rolling_mean(vel_left_acc_);
+  vel_[RIGHT_ENC] = bacc::rolling_mean(vel_right_acc_);
+
+  old_pos_[LEFT_ENC] = cur_pos[LEFT_ENC];
+  old_pos_[RIGHT_ENC] = cur_pos[RIGHT_ENC];
+}
+
+double QuadratureEncoder::getVelocity(EncoderSide enc_side) {
+  return vel_[enc_side];
 }
 
 }  // namespace doogie_drivers

@@ -130,12 +130,18 @@
 #define DOOGIE_DRIVERS_QUADRATURE_ENCODER_DRIVER_H_
 
 #include <cstdint>
+#include <cstddef>
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/statistics/rolling_mean.hpp>
 
 #define PREV_MASK 0x1  // Mask for the previous state in determining direction f rotation.
 #define CURR_MASK 0x2  // Mask for the current state in determining direction of rotation.
 #define INVALID   0x3  // XORing two states where both bits have changed.
 
 namespace doogie_drivers {
+
+namespace bacc = boost::accumulators;
 
 enum EncoderPinsIndex {
   LEFT_ENC_CHA,
@@ -157,10 +163,15 @@ class QuadratureEncoder {
   } Encoding;
 
   /**
-   * @brief Construct a new QuadratureEncoder object
+   * @brief Construct a new Quadrature Encoder object
    * 
+   * @param pulses_per_rev 
+   * @param wheel_radius 
+   * @param gear_ratio 
+   * @param velocity_rolling_window_size 
    */
-  QuadratureEncoder(unsigned int pulses_per_rev, double wheel_radius, unsigned int gear_ratio = 1);
+  QuadratureEncoder(unsigned int pulses_per_rev, double wheel_radius,
+                    unsigned int gear_ratio = 1, size_t velocity_rolling_window_size = 10);
 
   /**
    * @brief Setup pins and interrupts
@@ -222,8 +233,26 @@ class QuadratureEncoder {
    * @return double Linear poisiton in radians
    */
   double getLinearPosition(EncoderSide enc_side);
+  /**
+   * @brief Update actuator velocity according to pulses count.
+   * 
+   * This method should be called periodically to better velocity estimation.
+   * 
+   */
+  void updateVelocity(double dt);
+  /**
+   * @brief Get the actuator velocity
+   * 
+   * @param enc_side 
+   * @return double 
+   */
+  double getVelocity(EncoderSide enc_side);
 
  private:
+  /// Rolling mean accumulator and window:
+  typedef bacc::accumulator_set<double, bacc::stats<bacc::tag::rolling_mean> > RollingMeanAcc;
+  typedef bacc::tag::rolling_window RollingWindow;
+
   /**
    * @brief Update the pulse count.
    *
@@ -243,7 +272,15 @@ class QuadratureEncoder {
   static uint8_t curr_state_[2];
   static volatile int pulses_[2];
 
+  double old_pos_[2];
+  double vel_[2];
+
   static Encoding encoding_;
+
+  /// Rolling mean accumulators for the linar and angular velocities:
+  size_t velocity_rolling_window_size_;
+  RollingMeanAcc vel_left_acc_;
+  RollingMeanAcc vel_right_acc_;
 };
 
 }  // namespace doogie_drivers

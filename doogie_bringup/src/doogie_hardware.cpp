@@ -3,7 +3,8 @@
  */
 
 #include <cstddef>
-#include <random>
+#include <stdexcept>
+#include "ros/ros.h"
 #include "doogie_bringup/doogie_hardware.hpp"
 
 using doogie_drivers::MotorSide;
@@ -54,8 +55,11 @@ void DoogieHardware::write() {
 void DoogieHardware::read(const double &dt) {
   joint_position_[LEFT_WHEEL] = this->doogie_encoders_.getAngularPosition(EncoderSide::LEFT_ENC);
   joint_position_[RIGHT_WHEEL] = this->doogie_encoders_.getAngularPosition(EncoderSide::RIGHT_ENC);
-  ROS_DEBUG_NAMED(logger_name_, "Left wheel angular position read = %lf", joint_position_[LEFT_WHEEL]);
-  ROS_DEBUG_NAMED(logger_name_, "Right wheel angular position read = %lf", joint_position_[RIGHT_WHEEL]);
+
+  this->doogie_encoders_.updateVelocity(dt);
+
+  joint_velocity_[LEFT_WHEEL] = this->doogie_encoders_.getVelocity(EncoderSide::LEFT_ENC);
+  joint_velocity_[RIGHT_WHEEL] = this->doogie_encoders_.getVelocity(EncoderSide::RIGHT_ENC);
 }
 
 }  // namespace doogie_bringup

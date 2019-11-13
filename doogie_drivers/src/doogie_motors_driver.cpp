@@ -36,6 +36,8 @@
  * Author: Mateus Menezes
  */
 
+#include <cmath>
+#include <exception>
 #include <wiringPi.h>
 #include "doogie_drivers/doogie_motors_driver.hpp"
 
@@ -89,10 +91,10 @@ void DoogieMotorsDriver::setMotorVelocity(float velocity, MotorSide motor_side, 
   int pwm_value = 0;
   switch (velocity_type) {
     case LINEAR:
-      pwm_value = velocity * 62.5f;
+      pwm_value = fabs(velocity) * 62.5f;
       break;
     case ANGULAR:
-      pwm_value = velocity * 0.94f;
+      pwm_value = fabs(velocity) * 0.94f;
       break;
   }
 
@@ -163,7 +165,7 @@ void DoogieMotorsDriver::setMotorTurningDirection(MotorSide motor_side, TurningD
             digitalWrite(MOTOR_RIGHT_EN2, HIGH);
             return;
         case COUNTER_CLOCKWISE:
-            digitalWrite(MOTOR_RIGHT_EN1, RIGHT);
+            digitalWrite(MOTOR_RIGHT_EN1, HIGH);
             digitalWrite(MOTOR_RIGHT_EN2, LOW);
             return;
       }

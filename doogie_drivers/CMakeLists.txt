@@ -4,6 +4,7 @@ project(doogie_drivers)
 add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED)
+find_package(Boost REQUIRED COMPONENTS)
 
 set(DOOGIE_MOTORS_DRIVER_LIB doogie_motors_driver)
 set(QUADRATURE_ENCODER_DRIVER_LIB quadrature_encoder_driver)
@@ -16,6 +17,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIR}
 )
     
 add_library(${DOOGIE_MOTORS_DRIVER_LIB}
@@ -29,10 +31,12 @@ add_library(${QUADRATURE_ENCODER_DRIVER_LIB}
 find_library(wiringPi_LIB wiringPi)
 target_link_libraries(${DOOGIE_MOTORS_DRIVER_LIB}
   ${wiringPi_LIB}
+  ${Boost_LIBRARIES}
 )
 
 target_link_libraries(${QUADRATURE_ENCODER_DRIVER_LIB}
   ${wiringPi_LIB}
+  ${Boost_LIBRARIES}
 )
 
 install(TARGETS ${DOOGIE_MOTORS_DRIVER_LIB} ${QUADRATURE_ENCODER_DRIVER_LIB}
