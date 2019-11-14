@@ -10,7 +10,7 @@
   <maintainer email="caioaamaral@gmail.com">Caio Amaral</maintainer>
   <autor email="mateusmenezes95@gmail.com">Mateus Menezes</autor>
 
-  <license>BSD</license>
+  <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
