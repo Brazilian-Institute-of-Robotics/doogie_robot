@@ -117,6 +117,8 @@ Please report bugs and request features using the [Issue Tracker].
 
 [BIR - Brazilian Institute of Robotics]: https://github.com/Brazilian-Institute-of-Robotics
 [Mateus Meneses]: https://github.com/doogie-mouse/doogie_robot/commits?author=mateusmenezes95
+[doogie_bringup]: doogie_bringup
+[doogie_drivers]: doogie_drivers
 [doogie_base]: http://github.com/doogie-mouse/doogie_base.git
 [doogie_gazebo]: doogie_gazebo
 [doogie_gazebo/Tutorials]: http://github.com/doogie-mouse/doogie_robot/wiki/doogie_gazebo
