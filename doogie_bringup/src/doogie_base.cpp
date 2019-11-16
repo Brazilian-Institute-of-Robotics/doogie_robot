@@ -17,23 +17,22 @@ int main(int argc, char **argv) {
   spinner.start();
 
   ros::NodeHandle nh;
-  doogie_bringup::DoogieHardware doogie_hardware;
+  doogie_bringup::DoogieHardware doogie_hardware(nh);
   controller_manager::ControllerManager cm(&doogie_hardware, nh);
 
   ros::Duration period(0.1);
   ros::Time last_time = ros::Time::now();
-  double dt = last_time.toSec();
 
   while (ros::ok()) {
-    dt = ros::Time::now().toSec() - last_time.toSec();
-    last_time = ros::Time::now();
-    ROS_INFO("Time = %f", dt);
+    ros::Time time = ros::Time::now();
+    ROS_INFO("Time = %f", (time - last_time).toSec());
 
-    doogie_hardware.read(dt);
-    cm.update(ros::Time::now(), ros::Duration(dt));
-    doogie_hardware.write();
+    doogie_hardware.read(time);
+    cm.update(ros::Time::now(), time - last_time);
+    doogie_hardware.write(time);
 
     period.sleep();
+    last_time = time;
   }
 
   return 0;

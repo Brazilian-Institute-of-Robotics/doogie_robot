@@ -40,6 +40,7 @@
 #include <exception>
 #include <wiringPi.h>
 #include "doogie_drivers/doogie_motors_driver.hpp"
+#include <boost/algorithm/clamp.hpp>
 
 namespace doogie_drivers {
 
@@ -70,8 +71,8 @@ void DoogieMotorsDriver::init() {
   pwmSetRange(PWM_RANGE);
 }
 
-void DoogieMotorsDriver::setMotorVelocity(float velocity, MotorSide motor_side, VelocityType velocity_type) {
-  if (velocity == 0.0) {
+void DoogieMotorsDriver::setMotorVelocity(int cmd, MotorSide motor_side, VelocityType velocity_type) {
+  if (cmd == 0.0) {
     switch (motor_side) {
       case LEFT:
         this->brakeMotor(LEFT);
@@ -82,33 +83,25 @@ void DoogieMotorsDriver::setMotorVelocity(float velocity, MotorSide motor_side, 
     }
   }
 
-  if (velocity > 0) {
+  if (cmd > 0) {
     this->setMotorTurningDirection(motor_side, CLOCKWISE);
   } else {
     this->setMotorTurningDirection(motor_side, COUNTER_CLOCKWISE);
   }
 
-  int pwm_value = 0;
-  switch (velocity_type) {
-    case LINEAR:
-      pwm_value = fabs(velocity) * 62.5f;
-      break;
-    case ANGULAR:
-      pwm_value = fabs(velocity) * 0.94f;
-      break;
-  }
+  cmd = boost::algorithm::clamp(cmd, -100, 100);
 
   if (motor_side == LEFT) {
-    pwmWrite(MOTOR_LEFT_PWM, pwm_value);
+    pwmWrite(MOTOR_LEFT_PWM, fabs(cmd));
     return;
   }
 
-  pwmWrite(MOTOR_RIGHT_PWM, pwm_value);
+  pwmWrite(MOTOR_RIGHT_PWM, fabs(cmd));
 }
 
-void DoogieMotorsDriver::setMotorsVelocity(float velocity, VelocityType velocity_type) {
-  this->setMotorVelocity(velocity, LEFT, velocity_type);
-  this->setMotorVelocity(velocity, RIGHT, velocity_type);
+void DoogieMotorsDriver::setMotorsVelocity(int cmd, VelocityType velocity_type) {
+  this->setMotorVelocity(cmd, LEFT, velocity_type);
+  this->setMotorVelocity(cmd, RIGHT, velocity_type);
 }
 
 void DoogieMotorsDriver::brakeMotor(MotorSide motor_side) {

@@ -8,6 +8,7 @@ set(CATKIN_BUILD_DEPS
   hardware_interface
   roscpp
   sensor_msgs
+  control_toolbox
   doogie_drivers
 )
 
