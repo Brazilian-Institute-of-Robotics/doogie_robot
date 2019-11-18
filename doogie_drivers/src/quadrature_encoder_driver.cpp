@@ -26,7 +26,7 @@
 
 #include "doogie_drivers/quadrature_encoder_driver.hpp"
 #include "wiringPi.h"
-#include <math.h>
+#include <cmath>
 
 namespace doogie_drivers {
 
@@ -35,17 +35,12 @@ volatile int QuadratureEncoder::pulses_[2] = {0, 0};
 uint8_t QuadratureEncoder::prev_state_[2] = {0, 0};
 uint8_t QuadratureEncoder::curr_state_[2] = {0, 0};
 
-QuadratureEncoder::Encoding QuadratureEncoder::encoding_ = QuadratureEncoder::Encoding::X2_ENCODING;
+QuadratureEncoder::Encoding QuadratureEncoder::encoding_ = QuadratureEncoder::Encoding::X4_ENCODING;
 
-QuadratureEncoder::QuadratureEncoder(unsigned int pulses_per_rev, double wheel_radius,
-                                     unsigned int gear_ratio, size_t velocity_rolling_window_size)
-  : velocity_rolling_window_size_(velocity_rolling_window_size)
-  , vel_left_acc_(RollingWindow::window_size = velocity_rolling_window_size_)
-  , vel_right_acc_(RollingWindow::window_size = velocity_rolling_window_size_) {
-  this->pulses_per_rev_ = pulses_per_rev * gear_ratio;
-  this->pulses_per_meters_ = (2.0f * M_PI * wheel_radius) / this->pulses_per_rev_;
-
-  for  (size_t i = 0; i < 2; i++) old_pos_[i] = 0;
+QuadratureEncoder::QuadratureEncoder(unsigned int counts_per_rev, double wheel_radius, unsigned int gear_ratio) {
+  this->counts_per_rev_ = counts_per_rev * gear_ratio;
+  if (encoding_ == X2_ENCODING) this->counts_per_rev_ /= 2;
+  for  (size_t i = 0; i < 2; i++) old_pulse_cnt_[i] = 0;
 }
 
 void QuadratureEncoder::init() {
@@ -80,26 +75,13 @@ void QuadratureEncoder::reset(EncoderSide enc_side) {
   pulses_[enc_side] = 0;
 }
 
-int QuadratureEncoder::getCurrentState(EncoderSide enc_side) {
-  return curr_state_[enc_side];
-}
-
 int QuadratureEncoder::getPulses(EncoderSide enc_side) {
   return pulses_[enc_side];
 }
 
 double QuadratureEncoder::getAngularPosition(EncoderSide enc_side) {
-  double count_factor;
-  encoding_ == X2_ENCODING ? count_factor = 2.0 : count_factor = 4.0;
-  double ang_position = static_cast<double>(pulses_[enc_side]) / (count_factor * static_cast<double>(pulses_per_rev_));
-  ang_position *= 2 * M_PI;
+  double ang_position = (2 * M_PI * static_cast<double>(pulses_[enc_side])) / static_cast<double>(counts_per_rev_);
   return ang_position;
-}
-
-double QuadratureEncoder::getLinearPosition(EncoderSide enc_side) {
-  double lin_poisition = static_cast<double>(pulses_[enc_side]) / static_cast<double>(encoding_ * pulses_per_rev_);
-  lin_poisition *= (1.0f / pulses_per_meters_);
-  return lin_poisition;
 }
 
 /** +-------------+
@@ -161,12 +143,16 @@ void QuadratureEncoder::encodeLeft() {
     // 11->00->11->00 is counter clockwise rotation or "forward" for left motor.
     if ((prev_state_[LEFT_ENC] == 0x3 && curr_state_[LEFT_ENC] == 0x0) ||
        (prev_state_[LEFT_ENC] == 0x0 && curr_state_[LEFT_ENC] == 0x3)) {
+      piLock(LEFT_ENC);
       pulses_[LEFT_ENC]++;
+      piUnlock(LEFT_ENC);
     } else {
       // 10->01->10->01 is clockwise rotation or "backward" for left motor.
       if ((prev_state_[LEFT_ENC] == 0x2 && curr_state_[LEFT_ENC] == 0x1) ||
           (prev_state_[LEFT_ENC] == 0x1 && curr_state_[LEFT_ENC] == 0x2)) {
+        piLock(LEFT_ENC);
         pulses_[LEFT_ENC]--;
+        piUnlock(LEFT_ENC);
       }
     }
   } else {
@@ -178,7 +164,9 @@ void QuadratureEncoder::encodeLeft() {
         // gives 0 if clockwise rotation and 1 if counter clockwise rotation.
         change = (prev_state_[LEFT_ENC] & PREV_MASK) ^ ((curr_state_[LEFT_ENC] & CURR_MASK) >> 1);
         if (change == 0) change = -1;
+        piLock(LEFT_ENC);
         pulses_[LEFT_ENC] -= change;
+        piUnlock(LEFT_ENC);
       }
     }
   }
@@ -195,12 +183,16 @@ void QuadratureEncoder::encodeRight() {
     // 11->00->11->00 is counter clockwise rotation or "backward" for right motor.
     if ((prev_state_[RIGHT_ENC] == 0x3 && curr_state_[RIGHT_ENC] == 0x0) ||
        (prev_state_[RIGHT_ENC] == 0x0 && curr_state_[RIGHT_ENC] == 0x3)) {
+      piLock(RIGHT_ENC);
       pulses_[RIGHT_ENC]--;
+      piUnlock(RIGHT_ENC);
     } else {
       // 10->01->10->01 is clockwise rotation or "forward" for right motor.
       if ((prev_state_[RIGHT_ENC] == 0x2 && curr_state_[RIGHT_ENC] == 0x1) ||
           (prev_state_[RIGHT_ENC] == 0x1 && curr_state_[RIGHT_ENC] == 0x2)) {
+        piLock(RIGHT_ENC);
         pulses_[RIGHT_ENC]++;
+        piUnlock(RIGHT_ENC);
       }
     }
   } else {
@@ -212,7 +204,9 @@ void QuadratureEncoder::encodeRight() {
         // gives 1 if clockwise rotation and 0 if counter clockwise rotation.
         change = (prev_state_[RIGHT_ENC] & PREV_MASK) ^ ((curr_state_[RIGHT_ENC] & CURR_MASK) >> 1);
         if (change == 0) change = -1;
+        piLock(RIGHT_ENC);
         pulses_[RIGHT_ENC] += change;
+        piUnlock(RIGHT_ENC);
       }
     }
   }
@@ -224,23 +218,21 @@ void QuadratureEncoder::updateVelocity(double dt) {
   if (dt < 0.0001)
     return;  // Interval too small to integrate with
   
-  double cur_pos[2];
-  double est_vel[2];
+  int cur_pulse_cnt[2];
 
-  cur_pos[LEFT_ENC] = this->getAngularPosition(LEFT_ENC);
-  cur_pos[RIGHT_ENC] = this->getAngularPosition(RIGHT_ENC);
+  piLock(LEFT_ENC);
+  cur_pulse_cnt[LEFT_ENC] = this->getPulses(LEFT_ENC);
+  piUnlock(LEFT_ENC);
 
-  est_vel[LEFT_ENC] = (cur_pos[LEFT_ENC] - old_pos_[LEFT_ENC]) / dt;
-  est_vel[RIGHT_ENC] = (cur_pos[RIGHT_ENC] - old_pos_[RIGHT_ENC]) / dt;
+  piLock(RIGHT_ENC);
+  cur_pulse_cnt[RIGHT_ENC] = this->getPulses(RIGHT_ENC);
+  piUnlock(RIGHT_ENC);
 
-  vel_left_acc_(est_vel[LEFT_ENC]);
-  vel_right_acc_(est_vel[RIGHT_ENC]);
+  vel_[LEFT_ENC] = (2 * M_PI * (cur_pulse_cnt[LEFT_ENC] - old_pulse_cnt_[LEFT_ENC])) / (counts_per_rev_ * dt);
+  vel_[RIGHT_ENC] = (2 * M_PI * (cur_pulse_cnt[RIGHT_ENC] - old_pulse_cnt_[RIGHT_ENC])) / (counts_per_rev_ * dt);
 
-  vel_[LEFT_ENC] = bacc::rolling_mean(vel_left_acc_);
-  vel_[RIGHT_ENC] = bacc::rolling_mean(vel_right_acc_);
-
-  old_pos_[LEFT_ENC] = cur_pos[LEFT_ENC];
-  old_pos_[RIGHT_ENC] = cur_pos[RIGHT_ENC];
+  old_pulse_cnt_[LEFT_ENC] = cur_pulse_cnt[LEFT_ENC];
+  old_pulse_cnt_[RIGHT_ENC] = cur_pulse_cnt[RIGHT_ENC];
 }
 
 double QuadratureEncoder::getVelocity(EncoderSide enc_side) {

@@ -131,17 +131,12 @@
 
 #include <cstdint>
 #include <cstddef>
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics/stats.hpp>
-#include <boost/accumulators/statistics/rolling_mean.hpp>
 
 #define PREV_MASK 0x1  // Mask for the previous state in determining direction f rotation.
 #define CURR_MASK 0x2  // Mask for the current state in determining direction of rotation.
 #define INVALID   0x3  // XORing two states where both bits have changed.
 
 namespace doogie_drivers {
-
-namespace bacc = boost::accumulators;
 
 enum EncoderPinsIndex {
   LEFT_ENC_CHA,
@@ -157,10 +152,10 @@ enum EncoderSide {
 
 class QuadratureEncoder {
  public:
-  typedef enum Encoding {
-    X2_ENCODING,
-    X4_ENCODING
-  } Encoding;
+  enum Encoding {
+    X2_ENCODING = 2,
+    X4_ENCODING = 4
+  };
 
   /**
    * @brief Construct a new Quadrature Encoder object
@@ -170,8 +165,7 @@ class QuadratureEncoder {
    * @param gear_ratio 
    * @param velocity_rolling_window_size 
    */
-  QuadratureEncoder(unsigned int pulses_per_rev, double wheel_radius,
-                    unsigned int gear_ratio = 1, size_t velocity_rolling_window_size = 10);
+  QuadratureEncoder(unsigned int counts_per_rev, double wheel_radius, unsigned int gear_ratio = 1);
 
   /**
    * @brief Setup pins and interrupts
@@ -185,15 +179,6 @@ class QuadratureEncoder {
    * Sets the pulses and revolutions count to zero.
    */
   void reset(EncoderSide enc_side);
-
-  /**
-   * @brief Read the state of the encoder.
-   *
-   * @return The current state of the encoder as a 2-bit number, where:
-   *         bit 1 = The reading from channel B
-   *         bit 2 = The reading from channel A
-   */
-  int getCurrentState(EncoderSide enc_side);
 
   /**
    * @brief Read the number of pulses recorded by the encoder.
@@ -218,22 +203,6 @@ class QuadratureEncoder {
   double getAngularPosition(EncoderSide enc_side);
 
   /**
-   * @brief Get the Linear Position of the wheel
-   * Linear position can be calculated by:
-   *
-   * (pulse count / X * N) * (1 / PPM)
-   *
-   * Where X is encoding type [e.g. X4 encoding => X=4], N is the number of
-   * pulses per revolution, and PPM is pulses per meters, or the equivalent for
-   * any other unit of displacement. PPM can be calculated by taking the
-   * circumference of the wheel or encoder disk and dividing it by the number
-   * of pulses per revolution.
-   * 
-   * @param enc_side Robot side where encoder is assembled
-   * @return double Linear poisiton in radians
-   */
-  double getLinearPosition(EncoderSide enc_side);
-  /**
    * @brief Update actuator velocity according to pulses count.
    * 
    * This method should be called periodically to better velocity estimation.
@@ -249,10 +218,6 @@ class QuadratureEncoder {
   double getVelocity(EncoderSide enc_side);
 
  private:
-  /// Rolling mean accumulator and window:
-  typedef bacc::accumulator_set<double, bacc::stats<bacc::tag::rolling_mean> > RollingMeanAcc;
-  typedef bacc::tag::rolling_window RollingWindow;
-
   /**
    * @brief Update the pulse count.
    *
@@ -264,7 +229,7 @@ class QuadratureEncoder {
   static void encodeLeft(void);
   static void encodeRight(void);
 
-  unsigned int pulses_per_rev_;
+  unsigned int counts_per_rev_;
   double pulses_per_meters_;
 
   static int channel_pins_[4];
@@ -272,15 +237,10 @@ class QuadratureEncoder {
   static uint8_t curr_state_[2];
   static volatile int pulses_[2];
 
-  double old_pos_[2];
+  double old_pulse_cnt_[2];
   double vel_[2];
 
   static Encoding encoding_;
-
-  /// Rolling mean accumulators for the linar and angular velocities:
-  size_t velocity_rolling_window_size_;
-  RollingMeanAcc vel_left_acc_;
-  RollingMeanAcc vel_right_acc_;
 };
 
 }  // namespace doogie_drivers
