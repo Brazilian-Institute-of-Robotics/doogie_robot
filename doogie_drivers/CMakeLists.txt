@@ -3,15 +3,23 @@ project(doogie_drivers)
 
 add_compile_options(-std=c++11)
 
-find_package(catkin REQUIRED)
+set(CATKIN_BUILD_DEPS
+  roscpp
+  std_msgs
+  control_msgs
+)
+
+find_package(catkin REQUIRED COMPONENTS ${CATKIN_BUILD_DEPS})
 find_package(Boost REQUIRED COMPONENTS)
 
 set(DOOGIE_MOTORS_DRIVER_LIB doogie_motors_driver)
 set(QUADRATURE_ENCODER_DRIVER_LIB quadrature_encoder_driver)
 
 catkin_package(
-  INCLUDE_DIRS include
+  INCLUDE_DIRS include ${catkin_INCLUDE_DIRS}
+  CATKIN_DEPENDS ${CATKIN_BUILD_DEPS}
   LIBRARIES ${DOOGIE_MOTORS_DRIVER_LIB} ${QUADRATURE_ENCODER_DRIVER_LIB}
+  DEPENDS Boost
 )
   
 include_directories(
@@ -48,4 +56,14 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
   FILES_MATCHING PATTERN "*.hpp"
   PATTERN "*~" EXCLUDE
+)
+
+add_executable(step_response_node 
+  test/step_response.cpp
+)
+
+target_link_libraries(step_response_node 
+  ${DOOGIE_MOTORS_DRIVER_LIB}
+  ${QUADRATURE_ENCODER_DRIVER_LIB}
+  ${catkin_LIBRARIES}
 )

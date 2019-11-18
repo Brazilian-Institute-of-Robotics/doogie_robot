@@ -11,6 +11,9 @@
   <author email="mateusmenezes95@gmail.com">Mateus Menezes</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>control_msgs</depend>
 
   <export></export>
 </package>
