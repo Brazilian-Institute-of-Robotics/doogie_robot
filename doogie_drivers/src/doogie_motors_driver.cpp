@@ -71,7 +71,7 @@ void DoogieMotorsDriver::init() {
   pwmSetRange(PWM_RANGE);
 }
 
-void DoogieMotorsDriver::setMotorVelocity(int cmd, MotorSide motor_side, VelocityType velocity_type) {
+void DoogieMotorsDriver::setMotorVelocity(int cmd, MotorSide motor_side) {
   if (cmd == 0.0) {
     switch (motor_side) {
       case LEFT:
@@ -99,9 +99,9 @@ void DoogieMotorsDriver::setMotorVelocity(int cmd, MotorSide motor_side, Velocit
   pwmWrite(MOTOR_RIGHT_PWM, fabs(cmd));
 }
 
-void DoogieMotorsDriver::setMotorsVelocity(int cmd, VelocityType velocity_type) {
-  this->setMotorVelocity(cmd, LEFT, velocity_type);
-  this->setMotorVelocity(cmd, RIGHT, velocity_type);
+void DoogieMotorsDriver::setMotorsVelocity(int cmd) {
+  this->setMotorVelocity(cmd, LEFT);
+  this->setMotorVelocity(cmd, RIGHT);
 }
 
 void DoogieMotorsDriver::brakeMotor(MotorSide motor_side) {

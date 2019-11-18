@@ -38,8 +38,8 @@ class DoogieMotorsDriver {
  public:
   explicit DoogieMotorsDriver(float wheel_diameter = 0.032, float gear_ratio = 29.86);
   void init();
-  void setMotorVelocity(int cmd, MotorSide motor_side, VelocityType velocity_type = LINEAR);
-  void setMotorsVelocity(int cmd, VelocityType velocity_type = LINEAR);
+  void setMotorVelocity(int cmd, MotorSide motor_side);
+  void setMotorsVelocity(int cmd);
   void brakeMotor(MotorSide motor_side);
   void brakeMotors();
   float getLeftMotorVelocity();
