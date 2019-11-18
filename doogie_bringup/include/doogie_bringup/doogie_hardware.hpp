@@ -38,7 +38,6 @@ class DoogieHardware : public hardware_interface::RobotHW {
 
   control_toolbox::Pid pid_[2];
   ros::Time write_last_time_;
-  ros::Time read_last_time_;
 
   enum WheelSide{
     LEFT_WHEEL,

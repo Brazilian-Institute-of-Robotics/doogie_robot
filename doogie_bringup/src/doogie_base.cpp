@@ -25,7 +25,6 @@ int main(int argc, char **argv) {
 
   while (ros::ok()) {
     ros::Time time = ros::Time::now();
-    ROS_INFO("Time = %f", (time - last_time).toSec());
 
     doogie_hardware.read(time);
     cm.update(ros::Time::now(), time - last_time);
