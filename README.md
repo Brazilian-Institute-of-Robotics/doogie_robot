@@ -40,8 +40,8 @@ Maintainer: Mateus Meneses, mateusmenezes95@gmail.com **
 
 # **File System**
 
-- [doogie_bringup] : Package with launch files to bringup Doogie Mouse robot controllers.
-- [doogie_drivers]: Cotains drivers used by Doogie Mouse robot **URDF**.
+- [doogie_bringup] : Package with launch files to bringup Doogie Mouse robot controllers and hardware device drivers.
+- [doogie_drivers]: Contains drivers used by Doogie Mouse robot.
 
 </br>
 
@@ -62,7 +62,8 @@ Attention, if you haven't installed [ROS] yet, please check [Ubuntu install of R
 
 **Building:**
 
-First, lets create a catkin workspace.
+First, lets create a catkin workspace. 
+>If `doogie_ws` already exists, you can skip this step.
 
     mkdir -p ~/doogie_ws/src
 
