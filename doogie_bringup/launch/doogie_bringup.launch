@@ -11,6 +11,10 @@
       <arg name="ns" value="$(arg robot_name)"/>
     </include>
 
+    <include file="$(find doogie_navigation)/launch/move_base.launch">
+      <arg name="ns" value="$(arg robot_name)"/>
+    </include>
+
   </group>
 
 </launch>
