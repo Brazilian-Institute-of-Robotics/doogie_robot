@@ -24,18 +24,10 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(doogie_hardware
-  src/doogie_hardware.cpp
-)
+add_library(doogie_hardware src/doogie_hardware.cpp )
+target_link_libraries(doogie_hardware ${catkin_LIBRARIES})
 
-target_link_libraries(doogie_hardware
-  ${catkin_LIBRARIES}
-)
-
-add_executable(doogie_base 
-  src/doogie_base.cpp
-)
-
+add_executable(doogie_base src/doogie_base.cpp)
 target_link_libraries(doogie_base
   ${catkin_LIBRARIES}
   doogie_hardware
