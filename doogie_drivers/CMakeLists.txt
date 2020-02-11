@@ -15,6 +15,7 @@ find_package(Boost REQUIRED COMPONENTS)
 set(DOOGIE_MOTORS_DRIVER_LIB doogie_motors_driver)
 set(QUADRATURE_ENCODER_DRIVER_LIB quadrature_encoder_driver)
 set(ADS1115_DRIVER_LIB ads1115_driver)
+set(IR_SENSOR_DRIVER_LIB ir_sensor_driver)
 
 catkin_package(
   INCLUDE_DIRS include ${catkin_INCLUDE_DIRS}
@@ -41,6 +42,10 @@ add_library(${QUADRATURE_ENCODER_DRIVER_LIB}
 
 add_library(${ADS1115_DRIVER_LIB}
   src/${ADS1115_DRIVER_LIB}.cpp
+)
+
+add_library(${IR_SENSOR_DRIVER_LIB}
+  src/${IR_SENSOR_DRIVER_LIB}.cpp
 )
     
 find_library(wiringPi_LIB wiringPi)
@@ -69,7 +74,12 @@ install(DIRECTORY include/${PROJECT_NAME}/
 )
 
 add_executable(ir_sensors_node src/ir_sensors_node.cpp)
-target_link_libraries(ir_sensors_node ${ADS1115_DRIVER_LIB})
+target_link_libraries(ir_sensors_node 
+  ${ADS1115_DRIVER_LIB}
+  ${IR_SENSOR_DRIVER_LIB}
+  ${wiringPi_LIB}
+  ${catkin_LIBRARIES}
+)
 
 # add_executable(step_response_node 
 #   test/step_response.cpp

@@ -1,21 +1,18 @@
 #include <ros/ros.h>
-#include "doogie_drivers/ads1115_driver.hpp"
+#include <exception>
+#include "doogie_drivers/ir_sensor_driver.hpp"
 
 int main(int argc, char **argv) {
-  ros::init(argc, argv, "doogie_control");
+  ros::init(argc, argv, "ir_sensors_node");
 
-  doogie_drivers::ADS115Driver ads(0x48);
-  ads.init(std::string("/dev/i2c-1"));
+  doogie_drivers::IRSensorDriver ir_sensor_driver;
 
-  ros::NodeHandle nh;
-
-  ros::Rate rate(ros::Duration(1.0));
-  while(ros::ok()) {
-    ROS_INFO("Channel 0 = %.2f", ads.readVoltage(0));
-    ROS_INFO("Channel 1 = %.2f", ads.readVoltage(1));
-    ROS_INFO("Channel 2 = %.2f", ads.readVoltage(2));
-    ROS_INFO("Channel 3 = %.2f", ads.readVoltage(3));
-    rate.sleep();
+  try {
+    ir_sensor_driver.init();
+    ir_sensor_driver.run();
+  } catch (std::runtime_error error) {
+    ROS_FATAL("%s", error.what());
+    ros::shutdown();
   }
 
   return 0;
