@@ -3,11 +3,12 @@
 
 #include <ros/ros.h>
 #include "doogie_drivers/ads1115_driver.hpp"
+#include "doogie_msgs/DoogiePosition.h"
 
 #define FRONT_EMITTERS_CTRL 22
-#define LEFT_EMITTER_CTRL 4 
+#define LEFT_EMITTER_CTRL 4
 #define RIGHT_EMITTER_CTRL 13
-#define ADC_A1_CHANNEL_CTRL 11 
+#define ADC_A1_CHANNEL_CTRL 11
 
 namespace doogie_drivers {
 
@@ -19,7 +20,7 @@ enum IRSensorSide {
 };
 
 class IRSensorDriver {
-public:
+ public:
   IRSensorDriver();
   void run();
   void init();
@@ -28,14 +29,17 @@ public:
   float computeDistance(IRSensorSide ir_sensor_side);
   ~IRSensorDriver();
 
-private:
+ private:
   void initHardware();
+  void doogiePositionCallback(const doogie_msgs::DoogiePositionConstPtr doogie_position);
   ros::NodeHandle nh_;
   ros::NodeHandle ph_;
   ros::Publisher wall_distances_pub_;
   ros::Subscriber doogie_position_sub_;
 
   ADS115Driver ads_;
+
+  float sensor_thresholds_[4];
 };
 
 }  // namespace doogie_drivers

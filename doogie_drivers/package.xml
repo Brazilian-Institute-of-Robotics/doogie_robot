@@ -15,6 +15,7 @@
   <depend>std_msgs</depend>
   <depend>doogie_msgs</depend>
   <depend>control_msgs</depend>
+  <depend>doogie_core</depend>
 
   <export></export>
 </package>

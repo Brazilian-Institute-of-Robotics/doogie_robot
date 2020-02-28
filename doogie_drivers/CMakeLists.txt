@@ -7,6 +7,8 @@ set(CATKIN_BUILD_DEPS
   roscpp
   std_msgs
   control_msgs
+  doogie_msgs
+  doogie_core
 )
 
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_BUILD_DEPS})
@@ -79,6 +81,15 @@ target_link_libraries(ir_sensors_node
   ${IR_SENSOR_DRIVER_LIB}
   ${wiringPi_LIB}
   ${catkin_LIBRARIES}
+)
+
+add_executable(calibration_node test/calibration.cpp)
+target_link_libraries(calibration_node 
+  ${catkin_LIBRARIES}
+  ${ADS1115_DRIVER_LIB}
+  ${IR_SENSOR_DRIVER_LIB}
+  ${wiringPi_LIB}
+  ${Boost_LIBRARIES}
 )
 
 # add_executable(step_response_node 

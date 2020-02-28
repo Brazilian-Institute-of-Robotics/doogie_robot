@@ -1,0 +1,4 @@
+front_left_threshold: 0.8 # Voltage value used to infer if there is a wall on front of front left sensor
+front_right_threshold: 0.8 # Voltage value used to infer if there is a wall on front of front right sensor
+left_threshold: 0.8 # Voltage value used to infer if there is a wall on front of left sensor
+right_threshold: 0.8 # Voltage value used to infer if there is a wall on front of right sensor

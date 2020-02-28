@@ -6,15 +6,31 @@
 #include "doogie_drivers/ir_sensor_driver.hpp"
 #include "doogie_msgs/DoogiePosition.h"
 #include "doogie_msgs/WallDistances.h"
+#include "doogie_core/utils.hpp"
+
+using doogie_core::DoogieUtils;
 
 namespace doogie_drivers {
 
-IRSensorDriver::IRSensorDriver() 
-  : ads_(0x48) {}
+IRSensorDriver::IRSensorDriver()
+  : ads_(0x48)
+  , ph_("~") {
+  DoogieUtils::getParameterHelper<float>(ph_, "ir_driver", "front_left_threshold",
+                                         &sensor_thresholds_[LEFT_FRONT], 0.5);
+  DoogieUtils::getParameterHelper<float>(ph_, "ir_driver", "left_threshold",
+                                         &sensor_thresholds_[LEFT], 0.5);
+  DoogieUtils::getParameterHelper<float>(ph_, "ir_driver", "front_right_threshold",
+                                         &sensor_thresholds_[RIGHT_FRONT], 0.5);
+  DoogieUtils::getParameterHelper<float>(ph_, "ir_driver", "right_threshold",
+                                         &sensor_thresholds_[RIGHT], 0.5);
+}
 
 void IRSensorDriver::init() {
   this->initHardware();
   ads_.init(std::string("/dev/i2c-1"));
+
+  wall_distances_pub_ = nh_.advertise<doogie_msgs::WallDistances>("wall_distances", 1);
+  doogie_position_sub_ = nh_.subscribe("doogie_position", 1, &IRSensorDriver::doogiePositionCallback, this);
 }
 
 void IRSensorDriver::initHardware() {
@@ -28,20 +44,12 @@ void IRSensorDriver::initHardware() {
   digitalWrite(FRONT_EMITTERS_CTRL, LOW);
   digitalWrite(LEFT_EMITTER_CTRL, LOW);
   digitalWrite(RIGHT_EMITTER_CTRL, LOW);
-  digitalWrite(ADC_A1_CHANNEL_CTRL, LOW); // Enable channel 0 of analog multiplexer
+  digitalWrite(ADC_A1_CHANNEL_CTRL, LOW);  // Enable channel 0 of analog multiplexer
 }
 
 void IRSensorDriver::run() {
-  ros::Rate rate(ros::Duration(1.0));
-  while(ros::ok()) {
-    ROS_INFO("-----------------");
-    ROS_INFO("Channel 0 = %.2f", this->computeDistance(LEFT_FRONT));
-    ROS_INFO("Channel 1 = %.2f", this->computeDistance(LEFT));
-    ROS_INFO("Channel 2 = %.2f", this->computeDistance(RIGHT_FRONT));
-    ROS_INFO("Channel 3 = %.2f", this->computeDistance(RIGHT));
-    ROS_INFO("-----------------");
-    rate.sleep();
-  }
+  ROS_INFO("IR Sensors node has started!");
+  ros::spin();
 }
 
 void IRSensorDriver::turnOnEmitter(IRSensorSide ir_sensor_side) {
@@ -77,13 +85,27 @@ void IRSensorDriver::turnOffEmitter(IRSensorSide ir_sensor_side) {
 }
 
 float IRSensorDriver::computeDistance(IRSensorSide ir_sensor_side) {
-  float distance;
+  float distance = ads_.readVoltage(ir_sensor_side);
+
   this->turnOnEmitter(ir_sensor_side);
-  usleep(180);
-  distance = ads_.readVoltage(ir_sensor_side);
+  usleep(1000);
+  distance = ads_.readVoltage(ir_sensor_side) - distance;
   this->turnOffEmitter(ir_sensor_side);
-  
-  return distance;
+
+  if (distance > sensor_thresholds_[ir_sensor_side]) return 0;
+
+  return 1.0;
+}
+
+void IRSensorDriver::doogiePositionCallback(const doogie_msgs::DoogiePositionConstPtr doogie_position) {
+  doogie_msgs::WallDistances wall_distances;
+
+  wall_distances.front_left_sensor.range = this->computeDistance(LEFT_FRONT);
+  wall_distances.left_sensor.range = this->computeDistance(LEFT);
+  wall_distances.front_right_sensor.range = this->computeDistance(RIGHT_FRONT);
+  wall_distances.right_sensor.range = this->computeDistance(RIGHT);
+
+  wall_distances_pub_.publish(wall_distances);
 }
 
 IRSensorDriver::~IRSensorDriver() {

@@ -4,6 +4,8 @@
   <arg name="robot_name" default="doogie"/>
  
   <group ns="$(arg robot_name)">
+
+    <rosparam file="$(find doogie_description)/config/mazes.yaml" command="load"/>
    
     <node name="doogie_node" pkg="doogie_bringup" type="doogie_base" output="screen"/>
     
@@ -12,6 +14,18 @@
     </include>
 
     <include file="$(find doogie_navigation)/launch/move_base.launch">
+      <arg name="ns" value="$(arg robot_name)"/>
+    </include>
+
+    <include file="$(find doogie_perception)/launch/doogie_perception.launch">
+      <arg name="ns" value="$(arg robot_name)"/>
+    </include>
+
+    <include file="$(find doogie_drivers)/launch/ir_sensor_node.launch">
+      <arg name="ns" value="$(arg robot_name)"/>
+    </include>
+
+    <include file="$(find doogie_navigation)/launch/maze_solver.launch">
       <arg name="ns" value="$(arg robot_name)"/>
     </include>
 
