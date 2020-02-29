@@ -37,11 +37,11 @@ class Calibration {
   }
 
   void timerCallback(const ros::TimerEvent& time) {
-    int max_num_samples = 50;
-    left_front_acc_(ir_sensor_driver.computeDistance(doogie_drivers::LEFT_FRONT));
-    left_acc_(ir_sensor_driver.computeDistance(doogie_drivers::LEFT));
-    right_front_acc_(ir_sensor_driver.computeDistance(doogie_drivers::RIGHT_FRONT));
-    right_acc_(ir_sensor_driver.computeDistance(doogie_drivers::RIGHT));
+    int max_num_samples = 10;
+    left_front_acc_(ir_sensor_driver.computeDistance(doogie_drivers::LEFT_FRONT, true));
+    left_acc_(ir_sensor_driver.computeDistance(doogie_drivers::LEFT, true));
+    right_front_acc_(ir_sensor_driver.computeDistance(doogie_drivers::RIGHT_FRONT, true));
+    right_acc_(ir_sensor_driver.computeDistance(doogie_drivers::RIGHT, true));
 
     num_samples++;
     if (num_samples > max_num_samples) {
