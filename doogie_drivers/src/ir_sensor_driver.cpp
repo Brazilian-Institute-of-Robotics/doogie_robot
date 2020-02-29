@@ -84,7 +84,7 @@ void IRSensorDriver::turnOffEmitter(IRSensorSide ir_sensor_side) {
   }
 }
 
-float IRSensorDriver::computeDistance(IRSensorSide ir_sensor_side) {
+float IRSensorDriver::computeDistance(IRSensorSide ir_sensor_side, bool raw_value) {
   float distance = ads_.readVoltage(ir_sensor_side);
 
   this->turnOnEmitter(ir_sensor_side);
@@ -92,8 +92,8 @@ float IRSensorDriver::computeDistance(IRSensorSide ir_sensor_side) {
   distance = ads_.readVoltage(ir_sensor_side) - distance;
   this->turnOffEmitter(ir_sensor_side);
 
+  if (raw_value) return distance;
   if (distance > sensor_thresholds_[ir_sensor_side]) return 0;
-
   return 1.0;
 }
 

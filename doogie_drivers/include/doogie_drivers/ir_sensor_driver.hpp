@@ -26,7 +26,7 @@ class IRSensorDriver {
   void init();
   void turnOnEmitter(IRSensorSide ir_sensor_side);
   void turnOffEmitter(IRSensorSide ir_sensor_side);
-  float computeDistance(IRSensorSide ir_sensor_side);
+  float computeDistance(IRSensorSide ir_sensor_side, bool raw_value = false);
   ~IRSensorDriver();
 
  private:
