@@ -3,39 +3,101 @@ project(doogie_drivers)
 
 add_compile_options(-std=c++11)
 
-find_package(catkin REQUIRED)
+set(CATKIN_BUILD_DEPS
+  roscpp
+  std_msgs
+  control_msgs
+  doogie_msgs
+  doogie_core
+)
+
+find_package(catkin REQUIRED COMPONENTS ${CATKIN_BUILD_DEPS})
+find_package(Boost REQUIRED COMPONENTS)
+
+set(DOOGIE_MOTORS_DRIVER_LIB doogie_motors_driver)
+set(QUADRATURE_ENCODER_DRIVER_LIB quadrature_encoder_driver)
+set(ADS1115_DRIVER_LIB ads1115_driver)
+set(IR_SENSOR_DRIVER_LIB ir_sensor_driver)
 
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES doogie_drivers
-#  DEPENDS wiringPi
+  INCLUDE_DIRS include ${catkin_INCLUDE_DIRS}
+  CATKIN_DEPENDS ${CATKIN_BUILD_DEPS}
+  LIBRARIES 
+    ${DOOGIE_MOTORS_DRIVER_LIB} 
+    ${QUADRATURE_ENCODER_DRIVER_LIB}
+  DEPENDS Boost
 )
-
+  
 include_directories(
-# include
-# ${catkin_INCLUDE_DIRS}
+  include
+  ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIR}
+)
+    
+add_library(${DOOGIE_MOTORS_DRIVER_LIB}
+  src/${DOOGIE_MOTORS_DRIVER_LIB}.cpp
 )
 
-# find_library(wiringPi_LIB wiringPi)
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/doogie_drivers.cpp
+add_library(${QUADRATURE_ENCODER_DRIVER_LIB}
+  src/${QUADRATURE_ENCODER_DRIVER_LIB}.cpp
+)
+
+add_library(${ADS1115_DRIVER_LIB}
+  src/${ADS1115_DRIVER_LIB}.cpp
+)
+
+add_library(${IR_SENSOR_DRIVER_LIB}
+  src/${IR_SENSOR_DRIVER_LIB}.cpp
+)
+    
+find_library(wiringPi_LIB wiringPi)
+target_link_libraries(${DOOGIE_MOTORS_DRIVER_LIB}
+  ${wiringPi_LIB}
+  ${Boost_LIBRARIES}
+)
+
+target_link_libraries(${QUADRATURE_ENCODER_DRIVER_LIB}
+  ${wiringPi_LIB}
+  ${Boost_LIBRARIES}
+)
+
+install(
+  TARGETS 
+    ${DOOGIE_MOTORS_DRIVER_LIB} 
+    ${QUADRATURE_ENCODER_DRIVER_LIB}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+  FILES_MATCHING PATTERN "*.hpp"
+  PATTERN "*~" EXCLUDE
+)
+
+add_executable(ir_sensors_node src/ir_sensors_node.cpp)
+target_link_libraries(ir_sensors_node 
+  ${ADS1115_DRIVER_LIB}
+  ${IR_SENSOR_DRIVER_LIB}
+  ${wiringPi_LIB}
+  ${catkin_LIBRARIES}
+)
+
+add_executable(calibration_node test/calibration.cpp)
+target_link_libraries(calibration_node 
+  ${catkin_LIBRARIES}
+  ${ADS1115_DRIVER_LIB}
+  ${IR_SENSOR_DRIVER_LIB}
+  ${wiringPi_LIB}
+  ${Boost_LIBRARIES}
+)
+
+# add_executable(step_response_node 
+#   test/step_response.cpp
 # )
 
-# target_link_libraries(doogie_motors
-#   ${wiringPi_LIB}
-# )
-
-## Mark libraries for installation
-## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-# install(TARGETS ${PROJECT_NAME}
-#   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-#   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-# )
-
-## Mark cpp header files for installation
-# install(DIRECTORY include/${PROJECT_NAME}/
-#   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-#   FILES_MATCHING PATTERN "*.hpp"
-#   PATTERN "~" EXCLUDE
+# target_link_libraries(step_response_node 
+#   ${DOOGIE_MOTORS_DRIVER_LIB}
+#   ${QUADRATURE_ENCODER_DRIVER_LIB}
+#   ${catkin_LIBRARIES}
 # )

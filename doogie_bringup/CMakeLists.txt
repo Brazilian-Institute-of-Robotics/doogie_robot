@@ -8,6 +8,8 @@ set(CATKIN_BUILD_DEPS
   hardware_interface
   roscpp
   sensor_msgs
+  control_toolbox
+  doogie_drivers
 )
 
 find_package(catkin REQUIRED COMPONENTS ${CATKIN_BUILD_DEPS})
@@ -15,7 +17,6 @@ find_package(catkin REQUIRED COMPONENTS ${CATKIN_BUILD_DEPS})
 catkin_package(
  INCLUDE_DIRS include
  CATKIN_DEPENDS ${CATKIN_BUILD_DEPS}
-#  DEPENDS wiringPi
 )
 
 include_directories(
@@ -23,12 +24,11 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-## Declare a C++ executable
-## With catkin_make all packages are built within a single CMake context
-## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/doogie_bringup_node.cpp)
+add_library(doogie_hardware src/doogie_hardware.cpp )
+target_link_libraries(doogie_hardware ${catkin_LIBRARIES})
 
-## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+add_executable(doogie_base src/doogie_base.cpp)
+target_link_libraries(doogie_base
+  ${catkin_LIBRARIES}
+  doogie_hardware
+)

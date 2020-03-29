@@ -6,11 +6,16 @@
 
   <maintainer email="mateusmenezes95@gmail.com">Mateus Menezes</maintainer>
 
-  <license>BSD</license>
+  <license>Apache 2.0</license>
 
   <author email="mateusmenezes95@gmail.com">Mateus Menezes</author>
 
   <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>std_msgs</depend>
+  <depend>doogie_msgs</depend>
+  <depend>control_msgs</depend>
+  <depend>doogie_core</depend>
 
   <export></export>
 </package>

@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+ 
+  <arg name="ns" default="/"/>
+ 
+  <node name="calibration_node" pkg="doogie_drivers" type="calibration_node" output="screen">
+    <rosparam file="$(find doogie_drivers)/config/params.yaml" command="load"/>
+  </node>
+
+</launch>

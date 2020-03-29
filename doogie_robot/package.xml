@@ -3,17 +3,20 @@
   <name>doogie_robot</name>
   <version>0.0.0</version>
   <description>A metapackage which extends doogie_base and includes ROS libaries
-    for any robot hardware. It may not contain any GUI dependencies.
+    for Doogie robot hardware application. It may not contain any GUI dependencies.
   </description>
 
   <maintainer email="mateusmenezes95@gmail.com">Mateus Menezes</maintainer>
   <maintainer email="caioaamaral@gmail.com">Caio Amaral</maintainer>
+  <author email="mateusmenezes95@gmail.com">Mateus Menezes</author>
 
-  <license>BSD</license>
+  <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
   <exec_depend>doogie_base</exec_depend>
+  <exec_depend>doogie_bringup</exec_depend>
+  <exec_depend>doogie_drivers</exec_depend>
 
   <export>
     <metapackage/>
